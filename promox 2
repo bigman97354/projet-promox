@@ -1,0 +1,73 @@
+✅ 1. Créer un script robuste avec logs et vérification
+Améliore ton script pour inclure :
+
+Des logs (pour savoir ce qui a été transféré)
+
+Un contrôle d’erreurs
+
+Une notification (ex : mail en cas d’échec)
+
+Exemple de script amélioré :
+bash
+Copier
+Modifier
+#!/bin/bash
+set -euo pipefail
+
+# Variables
+SOURCE_DIR="/stockageVM"
+DEST_USER="melveen"
+DEST_HOST="192.168.1.31"
+DEST_DIR="/home/melveen/vmsave"
+LOGFILE="/var/log/backup_vm.log"
+
+# Date
+DATE=$(date '+%Y-%m-%d %H:%M:%S')
+
+# Transfert
+echo "[$DATE] Démarrage du transfert..." >> "$LOGFILE"
+if scp -r "$SOURCE_DIR" "$DEST_USER@$DEST_HOST:$DEST_DIR" >> "$LOGFILE" 2>&1; then
+    echo "[$DATE] Transfert réussi." >> "$LOGFILE"
+else
+    echo "[$DATE] ERREUR de transfert !" >> "$LOGFILE"
+    # Optionnel : envoyer un mail
+    echo "Echec du transfert des sauvegardes" | mail -s "Backup Failed" admin@tondomaine.com
+    exit 1
+fi
+✅ 2. Planifier l'exécution automatique avec cron
+Étapes :
+Ouvre le crontab :
+
+bash
+Copier
+Modifier
+crontab -e
+Ajoute une ligne comme celle-ci pour exécuter le script tous les jours à 2h00 du matin :
+
+bash
+Copier
+Modifier
+0 2 * * * /chemin/vers/ton_script.sh
+🔐 Assure-toi que le script est exécutable :
+
+bash
+Copier
+Modifier
+chmod +x /chemin/vers/ton_script.sh
+✅ 3. Éviter les demandes de mot de passe SSH (authentification automatique)
+Ton script utilise scp, donc configure une clé SSH sans mot de passe :
+
+Sur la machine source :
+
+bash
+Copier
+Modifier
+ssh-keygen -t rsa
+Copie la clé publique sur la machine de destination :
+
+bash
+Copier
+Modifier
+ssh-copy-id melveen@192.168.1.31
+Cela permet d'exécuter scp sans mot de passe.
+
