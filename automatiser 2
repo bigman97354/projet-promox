@@ -1,0 +1,84 @@
+✅ Étapes détaillées pour déclencher une sauvegarde à l’arrêt d’une VM dans Proxmox
+📁 1. Crée un répertoire pour les hook scripts (si non existant)
+bash
+Copier
+Modifier
+mkdir -p /etc/pve/local/hooks
+📝 2. Crée ton hook script
+Exemple : pour la VM ID 101, crée le fichier :
+
+bash
+Copier
+Modifier
+nano /etc/pve/local/hooks/vm101-hook.sh
+Et colle ce contenu :
+
+bash
+Copier
+Modifier
+#!/bin/bash
+
+# Hook script pour la VM 101
+
+VMID="$1"
+EVENT="$2"
+
+if [ "$EVENT" == "post-stop" ]; then
+    echo "[$(date)] La VM $VMID vient d'être arrêtée. Lancement de la sauvegarde..." >> /var/log/hook_vm101.log
+    vzdump $VMID --mode snapshot --compress zstd --storage local --remove 0 --quiet 1 >> /var/log/hook_vm101.log
+    echo "[$(date)] Sauvegarde terminée pour la VM $VMID." >> /var/log/hook_vm101.log
+fi
+🔐 3. Rends le script exécutable
+bash
+Copier
+Modifier
+chmod +x /etc/pve/local/hooks/vm101-hook.sh
+⚙️ 4. Associe le script à ta VM via son fichier de configuration
+Édite le fichier config de la VM (ex. VM ID 101) :
+
+bash
+Copier
+Modifier
+nano /etc/pve/qemu-server/101.conf
+Ajoute à la fin :
+
+bash
+Copier
+Modifier
+hookscript: local:hooks/vm101-hook.sh
+✅ 5. Test : arrête la VM depuis l’interface
+Quand tu arrêtes la VM 101 depuis l’interface ou en ligne de commande, le hook “post-stop” sera déclenché, et ta sauvegarde se lance automatiquement.
+
+📌 Résumé du comportement
+Action	Résultat
+VM arrêtée	Hook script lancé
+Script détecte post-stop	Lancement automatique de la sauvegarde
+Sauvegarde stockée	Dans /var/lib/vz/dump/ (par défaut)
+Log de sauvegarde	/var/log/hook_vm101.log
+
+🎁 Bonus : Support multi-VM
+Tu peux réutiliser le même script pour plusieurs VMs si tu veux un hook centralisé. Il suffit de l’attacher dans chaque *.conf :
+
+bash
+Copier
+Modifier
+hookscript: local:hooks/vm-hook.sh
+Et dans le script, traite plusieurs IDs avec un case $VMID in).
+
+Souhaites-tu que je :
+
+T’écrive un script pour plusieurs VMs ?
+
+Ajoute un mail ou webhook de notification ?
+
+Fasse la même chose pour les conteneurs LXC ?
+
+Tu veux que je te prépare un pack complet à copier/coller ?
+
+
+
+
+
+
+
+
